@@ -1,6 +1,7 @@
 using UnityEngine;
 
 public class SkeletonPlayer : MonoBehaviour
+
 {
     // --------------------------------------------------
     // CONFIGURAÇÕES DE MOVIMENTO
@@ -42,194 +43,229 @@ public class SkeletonPlayer : MonoBehaviour
 
 
     void Start()
+
     {
         animator = GetComponent<Animator>();
         controller = GetComponent<CharacterController>();
     }
-
-
-    void Update()
     {
-        // --------------------------------------------------
-        // MOVIMENTO PARA FRENTE E PARA TRÁS
-        // --------------------------------------------------
+    }
+void Movimento()
+{
+    bool pressionandoW = Input.GetKey(KeyCode.W);
+    bool pressionandoS = Input.GetKey(KeyCode.S);
 
-        bool pressionandoW = Input.GetKey(KeyCode.W);
-        bool pressionandoS = Input.GetKey(KeyCode.S);
+    bool estaMovendo =
+        pressionandoW && !pressionandoS;
 
-        bool estaMovendo =
-            pressionandoW && !pressionandoS;
+    bool estaMovendoParaTras =
+        pressionandoS && !pressionandoW;
 
-        bool estaMovendoParaTras =
-            pressionandoS && !pressionandoW;
+    if (estaMovendo == trus)
+        return estaMovendo;
+
+    if (estaMovendoParaTras == true)
+        return estaMovendoParaTras;
 
 
-        // --------------------------------------------------
-        // CORRIDA
-        // --------------------------------------------------
 
-        // Só pode correr quando estiver indo para frente.
-        bool estaCorrendo =
+    bool estaCorrendo =
             estaMovendo &&
             (Input.GetKey(KeyCode.LeftShift) ||
              Input.GetKey(KeyCode.RightShift));
 
+    if (Input.GetMouseButtonDown(0) && controller.isGrounded)
+    {
+        animator.SetTrigger("Attack");
+    }
+}
 
-        // --------------------------------------------------
-        // ATAQUE
-        // --------------------------------------------------
+float direcaoRotacao = 0f;
 
-        // O botão esquerdo do mouse executa o ataque.
-        // Por enquanto, o ataque só pode ser realizado no chão.
-        if (Input.GetMouseButtonDown(0) && controller.isGrounded)
-        {
-            animator.SetTrigger("Attack");
-        }
+if (Input.GetKey(KeyCode.A))
+{
+    direcaoRotacao = -1f;
+}
 
+if (Input.GetKey(KeyCode.D))
+{
+    direcaoRotacao = 1f;
+}
 
-        // --------------------------------------------------
-        // ROTAÇÃO
-        // --------------------------------------------------
+transform.Rotate(
+    0f,
+    direcaoRotacao * velocidadeRotacao * Time.deltaTime,
+    0f
+);
 
-        float direcaoRotacao = 0f;
+float velocidadeAtual = 0f;
 
-        if (Input.GetKey(KeyCode.A))
-        {
-            direcaoRotacao = -1f;
-        }
+if (estaMovendo)
+{
+    if (estaCorrendo)
+    {
+        velocidadeAtual = velocidadeCorrer;
+    }
+    else
+    {
+        velocidadeAtual = velocidadeAndar;
+    }
+}
+else if (estaMovendoParaTras)
+{
+    velocidadeAtual = -velocidadeAndarTras;
+}
 
-        if (Input.GetKey(KeyCode.D))
-        {
-            direcaoRotacao = 1f;
-        }
+bool estaNoChao = controller.isGrounded;
 
-        transform.Rotate(
-            0f,
-            direcaoRotacao * velocidadeRotacao * Time.deltaTime,
-            0f
+if (estaNoChao && velocidadeVertical < 0f)
+{
+    velocidadeVertical = -2f;
+}
+
+if (estaNoChao && Input.GetKeyDown(KeyCode.Space))
+{
+    velocidadeVertical =
+        Mathf.Sqrt(
+            alturaPulo * -2f * gravidade
         );
+}
 
+velocidadeVertical +=
+    gravidade * Time.deltaTime;
 
-        // --------------------------------------------------
-        // VELOCIDADE HORIZONTAL
-        // --------------------------------------------------
-
-        float velocidadeAtual = 0f;
-
-        if (estaMovendo)
-        {
-            if (estaCorrendo)
-            {
-                velocidadeAtual = velocidadeCorrer;
-            }
-            else
-            {
-                velocidadeAtual = velocidadeAndar;
-            }
-        }
-        else if (estaMovendoParaTras)
-        {
-            velocidadeAtual = -velocidadeAndarTras;
-        }
-
-
-        // --------------------------------------------------
-        // GRAVIDADE
-        // --------------------------------------------------
-
-        bool estaNoChao = controller.isGrounded;
-
-        if (estaNoChao && velocidadeVertical < 0f)
-        {
-            velocidadeVertical = -2f;
-        }
-
-
-        // --------------------------------------------------
-        // PULO
-        // --------------------------------------------------
-
-        // Só permite pular se estiver no chão.
-        if (estaNoChao && Input.GetKeyDown(KeyCode.Space))
-        {
-            velocidadeVertical =
-                Mathf.Sqrt(
-                    alturaPulo * -2f * gravidade
-                );
-        }
-
-        velocidadeVertical +=
-            gravidade * Time.deltaTime;
-
-
-        // --------------------------------------------------
-        // MOVIMENTO FINAL
-        // --------------------------------------------------
-
-        // Cria inicialmente o movimento para frente ou para trás.
-        Vector3 movimento =
+Vector3 movimento =
             transform.forward * velocidadeAtual;
 
-        // Acrescenta o movimento vertical causado pela gravidade.
-        movimento.y = velocidadeVertical;
+// Acrescenta o movimento vertical causado pela gravidade.
+movimento.y = velocidadeVertical;
 
-        // Executa os movimentos juntos.
-        controller.Move(
-            movimento * Time.deltaTime
-        );
+// Executa os movimentos juntos.
+controller.Move(
+    movimento * Time.deltaTime
+);
 
+bool estaCaindo =
+           !controller.isGrounded &&
+           velocidadeVertical < -0.1f;
 
-        // --------------------------------------------------
-        // DETECÇÃO DE QUEDA
-        // --------------------------------------------------
-
-        // A caveira está caindo quando:
-        //
-        // 1. não está encostando no chão;
-        // 2. sua velocidade vertical está apontando para baixo.
-        bool estaCaindo =
-            !controller.isGrounded &&
-            velocidadeVertical < -0.1f;
-
-
-        // --------------------------------------------------
-        // DETECÇÃO DE PULO
-        // --------------------------------------------------
-
-        // A caveira está pulando enquanto estiver no ar
-        // e sua velocidade vertical estiver apontando para cima.
-        bool estaPulando =
+bool estaPulando =
             !controller.isGrounded &&
             velocidadeVertical > 0.1f;
 
+void Update()
+{
+    // --------------------------------------------------
+    // MOVIMENTO PARA FRENTE E PARA TRÁS
+    // --------------------------------------------------
+    Movimento();
 
-        // --------------------------------------------------
-        // ANIMAÇÕES
-        // --------------------------------------------------
 
-        animator.SetBool(
+
+    // --------------------------------------------------
+    // CORRIDA
+    // --------------------------------------------------
+
+    // Só pode correr quando estiver indo para frente.
+    Movimento();
+
+
+    // --------------------------------------------------
+    // ATAQUE
+    // --------------------------------------------------
+
+    // O botão esquerdo do mouse executa o ataque.
+    // Por enquanto, o ataque só pode ser realizado no chão.
+    Movimento();
+
+
+    // --------------------------------------------------
+    // ROTAÇÃO
+    // --------------------------------------------------
+    Movimento();
+
+
+    // --------------------------------------------------
+    // VELOCIDADE HORIZONTAL
+    // --------------------------------------------------
+    Movimento();
+
+
+
+    // --------------------------------------------------
+    // GRAVIDADE
+    // --------------------------------------------------
+    Movimento();
+
+
+
+    // --------------------------------------------------
+    // PULO
+    // --------------------------------------------------
+
+    // Só permite pular se estiver no chão.
+    Movimento();
+
+
+
+    // --------------------------------------------------
+    // MOVIMENTO FINAL
+    // --------------------------------------------------
+    Movimento();
+
+
+
+
+    // --------------------------------------------------
+    // DETECÇÃO DE QUEDA
+    // --------------------------------------------------
+
+    // A caveira está caindo quando:
+    //
+    // 1. não está encostando no chão;
+    // 2. sua velocidade vertical está apontando para baixo.
+    Movimento();
+
+
+    // --------------------------------------------------
+    // DETECÇÃO DE PULO
+    // --------------------------------------------------
+
+    // A caveira está pulando enquanto estiver no ar
+    // e sua velocidade vertical estiver apontando para cima.
+    Movimento();
+
+
+    // --------------------------------------------------
+    // ANIMAÇÕES
+    // --------------------------------------------------
+
+    animator.SetBool(
             "IsMoving",
             estaMovendo
         );
 
-        animator.SetBool(
-            "IsRunning",
-            estaCorrendo
-        );
+    animator.SetBool(
+        "IsRunning",
+        estaCorrendo
+    );
 
-        animator.SetBool(
-            "IsMovingBackward",
-            estaMovendoParaTras
-        );
+    animator.SetBool(
+        "IsMovingBackward",
+        estaMovendoParaTras
+    );
 
-        animator.SetBool(
-            "IsFalling",
-            estaCaindo
-        );
+    animator.SetBool(
+        "IsFalling",
+        estaCaindo
+    );
 
-        animator.SetBool(
-            "IsJumping",
-            estaPulando
-        );
-    }
+    animator.SetBool(
+        "IsJumping",
+        estaPulando
+    );
 }
+}
+
+}
+
